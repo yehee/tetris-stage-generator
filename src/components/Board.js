@@ -1,24 +1,28 @@
 import React, { useState } from 'react';
 import { GridList, Button } from '@material-ui/core';
 
+const Array2D = (r, c) => [...Array(r)].map(x => Array(c).fill(0));
+
 export default function Board() {
     const [rows, setRows] = useState(20);
     const [cols, setCols] = useState(10);
-    const [data, setData] = useState([]);
-
-    const Array2D = (r, c) => [...Array(r)].map(x => Array(c).fill(0));
+    const [obs, setObs] = useState([]);
+    const [gem, setGem] = useState([]);
+    const [grid, setGrid] = useState(Array2D(rows, cols));
 
     const handleSave = () => {
         var out = '';
 
         for (var r = 0; r < rows; r++) {
             for (var c = 0; c < cols; c++)
-                out += (data.includes(r * cols + c) ? 1 : 0) + (c < cols - 1 ? ',' : '');
+                out += (grid[r][c]) + (c < cols - 1 ? ',' : '');
             out += '\n';
         }
 
         console.log(out);
     }
+
+    console.log(grid);
 
     return (
         <div>
@@ -27,24 +31,31 @@ export default function Board() {
             <Button variant="outlined" onClick={() => setCols(cols + 1)}>+ col</Button>
             <Button variant="outlined" onClick={handleSave}>Save</Button>
             <GridList cols={cols} style={{ width: '690px', margin: 'auto' }}>
-                {Array(rows * cols).fill().map((_, i) =>
-                    <Button
+                {Array(rows * cols).fill().map((_, i) => {
+                    var r = (i - (i % cols)) / cols, c = i % cols;
+                    return <Button
                         key={i}
                         onClick={() => {
-                            setData([...data, i]);
-                            console.log(data);
+                            grid[r][c] = (grid[r][c] + 1) % 3; setGrid(grid);
+                            if (grid[r][c] === 0) {
+                                setGem(gem => gem.filter(j => i != j));
+                            } else if (grid[r][c] === 1) {
+                                setObs(obs => [...obs, i]);
+                            } else {
+                                setObs(obs => obs.filter(j => i != j));
+                                setGem(gem => [...gem, i]);
+                            }
                         }}
                         style={{
                             border: '1px solid',
                             width: '50px',
                             height: '64px',
                             margin: '2.5px',
-                            background: data.includes(i) ? '#aaa' : 'transparent',
-                            color: data.includes(i) ? '#fff' : '#000',
+                            background: obs.includes(i) ? 'grey' : gem.includes(i) ? 'orange' : 'transparent',
                         }}>
-                        {i + 1}
+                        {grid[r][c]}
                     </Button>
-                )}
+                })}
             </GridList>
         </div>
     );
